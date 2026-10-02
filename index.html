@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Japfa Entrance Control Center</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<!-- Flatpickr (Kalender) CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+  :root{
+    --bg:#05070d;
+    --panel:#0b1220;
+    --panel-border:#1e2a44;
+    --blue:#666ee0;
+    --orange:#f5a623;
+    --purple:#8b5cf6;
+    --cyan:#22c1c3;
+    --darkorange:#e07b1a;
+    --green:#3ecf5e;
+    --red:#22c1c3;
+    --text:#e8edf7;
+    --muted:#7d8aa6;
+  }
+  *{box-sizing:border-box;}
+  
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    padding:10px;
+    min-height: 100vh; 
+    overflow-x: hidden; 
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  @media (min-width: 1200px) {
+    body {
+      height: 100vh;
+      overflow: hidden;
+    }
+  }
+
+  .header{
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:2px solid var(--panel-border); padding-bottom:8px;
+    flex-wrap:wrap; gap:12px;
+    flex-shrink: 0;
+  }
+  .header-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  
+  .logo-img {
+    height: 40px;
+    background: #ffffff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+
+  .title-block h1{margin:0;font-size:20px;letter-spacing:1px;font-weight:800;}
+  .title-block p{margin:2px 0 0;color:var(--muted);font-size:12px;}
+  .clock{text-align:right;}
+  .clock .date{font-size:12px;color:var(--muted);}
+  .clock .time{font-size:20px;font-weight:700;letter-spacing:1px;}
+  .clock .day{font-size:11px;color:var(--muted);}
+
+  .datepicker{
+    display:flex;align-items:center;gap:8px;background:var(--panel);
+    border:1px solid var(--panel-border);border-radius:8px;padding:4px 10px;
+    cursor: pointer;
+  }
+  .datepicker input, .datepicker select{
+    background:transparent;border:none;color:var(--text);
+    font-size:13px; cursor: pointer; outline: none; width: 90px;
+  }
+  .datepicker label{font-size:12px;color:var(--muted); cursor:pointer;}
+
+  /* ---------------- BUTTON TOGGLE (Untuk Semua Scroll) ---------------- */
+  .btn-toggle {
+    background:#ec6464;color:#f4f5f7;border:1px solid var(--panel-border);
+    border-radius:4px;padding:2px 8px;font-size:9.5px;cursor:pointer;
+    transition: 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn-toggle.active { background:var(--blue);color:#fff; font-weight: bold;}
+  /* ------------------------------------------------------------------ */
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:10px;
+    flex-shrink: 0;
+  }
+  .card{
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;
+    padding:12px; display:flex; flex-direction:column;
+  }
+  .card-head{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;margin-bottom:6px;letter-spacing:.3px;}
+  .badge-num{
+    width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;color:#000;
+  }
+  .b1{background:var(--blue);color:#fff;}
+  .b2{background:var(--orange);}
+  .b3{background:var(--purple);color:#fff;}
+  .b4{background:var(--cyan);}
+  .b5{background:var(--darkorange);}
+  .b6{background:var(--green);}
+
+  .metric-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px;}
+  .metric-value{font-size:32px;font-weight:800;color:var(--blue);line-height:1;}
+  .metric-unit{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  
+  table{width:100%;font-size:11px;border-collapse:collapse;}
+  
+  thead td {
+    color: var(--muted);
+    font-weight: 700;
+    padding-bottom: 4px;
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 2;
+    box-shadow: inset 0 -1px 0 var(--panel-border);
+  }
+
+  tbody td{padding:3px 2px;}
+  tbody tr td:last-child{text-align:right;font-weight:600;}
+
+  .split-tables{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;}
+  .split-tables .split-col{
+    display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.06);
+    border-radius:6px;padding:3px;overflow:hidden;
+  }
+  .split-tables .split-col-title{
+    font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;
+    letter-spacing:.4px;margin-bottom:3px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:2px;text-align:center;
+  }
+
+  .split-scroll-box{
+    max-height:120px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:var(--blue) transparent;
+  }
+  .split-scroll-box::-webkit-scrollbar{ width:4px; }
+  .split-scroll-box::-webkit-scrollbar-thumb{ background:var(--blue);border-radius:4px; }
+  .split-scroll-box::-webkit-scrollbar-track{ background:transparent; }
+
+  .stat-block {
+    margin-top: auto; 
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    height: 26px; 
+  }
+  .stat-line + .stat-line { 
+    border-top: 1px solid rgba(255,255,255,0.06); 
+  }
+  .stat-line .stat-label{ display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:600; }
+  .stat-line .stat-value{ font-weight:800;color:var(--text);white-space:nowrap; }
+  .stat-line.highlight .stat-label{ color:#c9d3e6; }
+  .stat-line.highlight .stat-value{ color:#8fb4ff; }
+
+  .bottom-grid{
+    display:grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+    gap:10px;
+    flex-shrink: 0;
+  }
+
+  .chart-card, .info-card, .alert-card{
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:12px;
+    display:flex;flex-direction:column; height: 180px; 
+  }
+  .chart-title{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;gap:6px;align-items:center;justify-content:space-between;}
+  .chart-title .chart-hint{font-size:9px;color:var(--muted);font-weight:400;}
+
+  .chart-scroll{
+    width:100%;
+    flex: 1;
+    overflow-y:hidden;
+    overflow-x:auto;
+    scrollbar-width:thin;
+    scrollbar-color:var(--blue) #101a30;
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:6px;
+  }
+  .chart-scroll::-webkit-scrollbar{ height:5px; width:5px; }
+  .chart-scroll::-webkit-scrollbar-thumb{ background:var(--blue);border-radius:4px; }
+  .chart-scroll::-webkit-scrollbar-track{ background:#101a30; }
+  .chart-inner{ position:relative; height:100%; min-width: 100%; }
+  
+  .chart-nav{ display:flex;gap:6px;margin-top:6px;align-items:center; }
+
+  .info-card-title{font-size:12px;font-weight:700;margin-bottom:6px;color:var(--cyan);display:flex;align-items:center;gap:6px;}
+  .info-content{font-size:11px;color:var(--muted);line-height:1.4;flex:1;display:flex;flex-direction:column;}
+  .info-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,0.06);}
+  .info-row span:last-child{color:var(--text);font-weight:700;}
+
+  .alert-title{
+    color:var(--red);font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:6px;
+  }
+  .alert-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed var(--panel-border);font-size:11px;gap:6px;}
+  .alert-row span:first-child{color:var(--muted);white-space:nowrap;}
+  .alert-row span:last-child{text-align:right;}
+  .alert-duration{font-size:22px;color:var(--red);font-weight:800;text-align:center;margin:2px 0;}
+  .alert-sub{font-size:10px;color:var(--muted);margin-top:auto;}
+
+  .rawtable-wrap{
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:12px;
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    min-height: 0; 
+  }
+  .rawtable-title{
+    font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;
+    align-items:center;flex-wrap:wrap;gap:8px; flex-shrink: 0;
+  }
+  .rawtable-title .count{font-size:11px;color:var(--muted);font-weight:400;}
+  .sort-controls{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+  .sort-controls select{
+    background:#101a30;color:var(--text);border:1px solid var(--panel-border);border-radius:4px;padding:2px 6px;font-size:11px;
+  }
+  
+  .table-scroll{
+    flex: 1; 
+    overflow-y:auto;
+    scrollbar-width:thin;scrollbar-color:var(--blue) #101a30;
+  }
+  .table-scroll::-webkit-scrollbar{ width:6px; }
+  .table-scroll::-webkit-scrollbar-thumb{ background:var(--blue);border-radius:4px; }
+  .table-scroll::-webkit-scrollbar-track{ background:#101a30; }
+
+  table.rawdata{width:100%;border-collapse:collapse;font-size:10.5px;white-space:nowrap;}
+  table.rawdata thead td{
+    background:#111a2e;color:#9fb2d6;font-weight:700;padding:5px 8px;
+    border-bottom:2px solid var(--panel-border);position:sticky;top:0;z-index:2;
+  }
+  table.rawdata tbody td{padding:5px 8px;border-bottom:1px solid #131c30;color:#c9d3e6;}
+  table.rawdata tbody tr:hover{background:#101a30;}
+  .status-pill{padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:700;}
+
+  .st-masuk{background:#1c3a70;color:#8fb4ff;}
+  .st-belumsampling{background:#5a3d0c;color:#f5a623;}
+  .st-sudahsampling{background:#3a2a63;color:#c4a6ff;}
+  .st-belumanalisa{background:#0d4a4a;color:#5fe0e0;}
+  .st-tungguunload{background:#5a2f0c;color:#f5934a;}
+  .st-selesai{background:#0f4d24;color:#5fe693;}
+
+  .group-header td{
+    background:#0d1830 !important;color:#9fb2d6;font-weight:700;font-size:11px;
+    padding:6px 8px !important;letter-spacing:.4px;border-bottom:1px solid var(--panel-border) !important;
+  }
+
+  .dt-cell{display:inline-flex;flex-direction:column;line-height:1.2;gap:0;}
+  .dt-cell .dt-date{font-weight:600;color:#dbe4f5;letter-spacing:.2px;}
+  .dt-cell .dt-time{font-size:9.5px;color:#7d8aa6;letter-spacing:.3px;}
+  .dt-empty{color:#4a5570;}
+
+  .footer{
+    display:flex;justify-content:space-between;color:var(--muted);font-size:11px;flex-wrap:wrap;gap:8px;
+    flex-shrink: 0; align-items:center;
+  }
+  #connStatus{font-weight:700;}
+  .ok{color:var(--green);}
+  .err{color:var(--red);}
+  .warn{color:var(--orange);}
+
+  @keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.2; }
+    100% { opacity: 1; }
+  }
+  .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background-color: var(--green);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: blink 1.5s infinite;
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  @media (max-width: 1199px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .bottom-grid { grid-template-columns: repeat(2, 1fr); }
+    .rawtable-wrap { min-height: 400px; } 
+  }
+  @media (max-width: 768px) {
+    .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .header-left { width: 100%; justify-content: space-between; }
+    .clock { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .clock .time { font-size: 18px; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .bottom-grid { grid-template-columns: 1fr; } 
+    .sort-controls { width: 100%; justify-content: space-between; }
+    .footer { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    .header-left { flex-direction: column; align-items: flex-start; }
+    .title-block h1 { font-size: 16px; }
+    .datepicker { width: 100%; justify-content: space-between; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="logo-japfaaa.png" alt="Logo Japfa" class="logo-img">
+    <div class="title-block">
+      <h1>Japfa Entrance Control Center</h1>
+      <p id="subtitle">PT Japfa Comfeed Indonesia Tbk Unit Lampung</p>
+    </div>
+    <div class="datepicker" id="datePickerWrap">
+      <label for="filterDate">📅 Date:</label>
+      <input type="text" id="filterDate" readonly placeholder="Select date...">
+    </div>
+  </div>
+  <div class="clock">
+    <div class="date" id="dateNow">--</div>
+    <div class="time" id="timeNow">--:--:--</div>
+    <div class="day" id="dayNow">-</div>
+  </div>
+</div>
+
+<div class="grid" id="cardsGrid"></div>
+
+<div class="bottom-grid">
+  <!-- Chart Card -->
+  <div class="chart-card">
+    <div class="chart-title">
+      <span>📊 Sampled Trucks / Hour</span>
+      <span class="chart-hint" id="chartRangeHint">07:00 - 18:00</span>
+    </div>
+    <div class="chart-scroll" id="chartScrollWrap">
+      <div class="chart-inner" id="chartInner">
+        <canvas id="perHourChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-nav">
+      <button id="btn-scroll-chart" class="btn-toggle active" onclick="toggleScroll('chart')">⏸ Pause</button>
+      <span style="font-size:9px;color:var(--muted);">🖱️ Drag/Scroll manual</span>
+    </div>
+  </div>
+
+  <!-- Info Card 1 : REJECTED MATERIALS -->
+  <div class="info-card">
+    <div class="info-card-title" style="justify-content: space-between;">
+      <div style="display:flex;align-items:center;gap:6px;"><span>🚫</span> REJECTED RAW MATERIAL</div>
+      <!-- Tombol pause rejected -->
+      <button id="btn-scroll-reject" class="btn-toggle active" onclick="toggleScroll('reject')">⏸ Pause</button>
+    </div>
+    <div class="info-content split-scroll-box" id="rejectedCardContent" data-scroll-key="reject" style="margin-top:6px;">
+      <!-- Content diisi dinamis -->
+    </div>
+  </div>
+
+  <!-- Info Card 2 -->
+  <div class="info-card">
+    <div class="info-card-title"><span>⚡</span> USAGE DECICION STATUS</div>
+    <div class="info-content" style="justify-content:center;">
+      <div class="info-row"><span>ACC</span><span></span></div>
+      <div class="info-row"><span>ACWC</span><span></span></div>
+      <div class="info-row"><span></span><span id="statThroughput"></span></div>
+    </div>
+  </div>
+
+  <!-- Average / Longest Waiting Card -->
+  <div class="alert-card" id="alertCard">
+    <div class="alert-title"><span>⏱</span>AVG.ANALYSIS PROCESING TIME</div>
+    <div class="alert-row"><span></span><span id="al_truck">-</span></div>
+    <div class="alert-row"><span></span><span id="al_rfid">-</span></div>
+    <div class="alert-duration" id="al_durasi">-</div>
+    <div class="alert-row"><span></span><span id="al_s1">-</span></div>
+    <div class="alert-row"><span></span><span id="al_status">-</span></div>
+    <div class="alert-sub"></div>
+  </div>
+</div>
+
+<div class="rawtable-wrap">
+  <div class="rawtable-title">
+    <span>📋 Trucks Transaction Data (Grouped by Status)</span>
+    <div class="sort-controls">
+      <label>Date order in group:</label>
+      <select id="sortDirection">
+        <option value="asc">Oldest → Newest</option>
+        <option value="desc">Newest → Oldest</option>
+      </select>
+      <span class="count" id="rawCount">0 rows</span>
+      <!-- Tombol pause raw table -->
+      <button id="btn-scroll-raw" class="btn-toggle active" onclick="toggleScroll('raw')">⏸ Pause</button>
+    </div>
+  </div>
+  <div class="table-scroll" id="rawTableScrollWrap">
+    <table class="rawdata" id="rawTable">
+      <thead>
+        <tr id="rawTableHead"></tr>
+      </thead>
+      <tbody id="rawTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  <span style="display:flex;align-items:center;">
+    <span class="live-dot"></span>
+    <span id="connStatus" class="ok">LIVE REAL-TIME</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp; Auto-syncing every <span id="refreshInterval">5</span>s
+  </span>
+  <span>Source: SAP | Receiving System | QC System &nbsp;&nbsp;|&nbsp;&nbsp; Last Update: <span id="lastUpdate">-</span></span>
+</div>
+
+<script>
+const CONFIG = {
+  DATA_MODE: "mock",
+  API_URL: "https://backend-anda.com/api/raw-data?date=",
+  REFRESH_MS: 5000, 
+  CHART_WINDOW_HOURS: 3,
+  CHART_DAY_START_HOUR: 7,
+  CHART_DAY_END_HOUR: 18,
+  CHART_BAR_WIDTH_PX: 42,
+  CHART_RESUME_DELAY_MS: 4000,
+  RAWTABLE_SCROLL_PX_PER_SEC: 26,
+  RAWTABLE_RESUME_DELAY_MS: 4000
+};
+
+// GLOBAL SCROLL STATE (true = Auto-Scroll Aktif, false = Paused secara Manual)
+const scrollStates = {
+  c0: true, c1: true, c2: true, c3: true, c4: true, c5: true,
+  reject: true, raw: true, chart: true
+};
+
+function toggleScroll(key) {
+  scrollStates[key] = !scrollStates[key];
+  const btn = document.getElementById('btn-scroll-' + key);
+  if(btn) {
+    btn.textContent = scrollStates[key] ? '⏸ Pause' : '▶ Resume';
+    btn.classList.toggle('active', scrollStates[key]);
+  }
+}
+
+const RAW_COLUMNS = [
+  "Station 1 Date","RFID No","Truck No.","Transaction No","Transaction Type",
+  "Station 1 No","Mapping DO","Station 5 Tap In","Sanitation Date","QC No",
+  "QC Date Tap In","QC Date Tap Out","Weighing No","Weight1 Date","Weight2 Date",
+  "Ud U Time","Weight Status ID","Warehouse No","WH Start Date","WH Finish Date",
+  "Complete WH","Posting","Posting Date","Bbm SJ","Cancel","Mat Doc Cancel",
+  "Mat Doc","Ud Code","Closed","Plant Id","Site Id",
+  "SODO Update Required","SODO Update Message","Sales Order No"
+];
+
+const DATE_COLUMNS = new Set([
+  "Station 1 Date","Station 5 Tap In","Sanitation Date","QC Date Tap In",
+  "QC Date Tap Out","Weight1 Date","Weight2 Date","Ud U Time","WH Start Date",
+  "WH Finish Date","Posting Date"
+]);
+
+const STATUS_ORDER = [
+  "NOT YET ARRIVED","NOT SAMPLED YET","ALREADY SAMPLED / ANALYZING",
+  "WAITING UNLOADING","UNLOADING","ALREADY UNLOADED"
+];
+
+document.getElementById('refreshInterval').textContent = Math.round(CONFIG.REFRESH_MS/1000);
+
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS_EN = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+
+flatpickr("#filterDate", {
+  defaultDate: "today",
+  maxDate: "today",
+  dateFormat: "Y-m-d",
+  onChange: function(selectedDates, dateStr, instance) {
+    fetchAndRender();
+  }
+});
+
+document.getElementById('datePickerWrap').addEventListener('click', function(){
+  document.getElementById('filterDate')._flatpickr.open();
+});
+
+function formatDuration(minutes) {
+  if (minutes === null || minutes === undefined || isNaN(minutes) || minutes === '-') return '-';
+  if (minutes === 0) return '0m';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatTanggalJam(value){
+  if(!value) return null;
+  const d = new Date(value);
+  if(isNaN(d)) return null;
+  const dd = String(d.getDate()).padStart(2,'0');
+  const bulan = MONTHS_EN[d.getMonth()];
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return { tanggal: `${dd} ${bulan} ${yyyy}`, jam: `${hh}:${mm}` };
+}
+
+function renderDateCell(value){
+  const f = formatTanggalJam(value);
+  if(!f) return '<span class="dt-empty">-</span>';
+  return `<span class="dt-cell"><span class="dt-date">${f.tanggal}</span><span class="dt-time">${f.jam} WIB</span></span>`;
+}
+
+function tickClock(){
+  const now = new Date();
+  const hari = DAYS_EN[now.getDay()];
+  const dd = String(now.getDate()).padStart(2,'0');
+  const bulan = MONTHS_EN[now.getMonth()];
+  document.getElementById('dateNow').textContent = `${dd} ${bulan} ${now.getFullYear()}`;
+  document.getElementById('timeNow').textContent = now.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('dayNow').textContent = hari;
+}
+setInterval(tickClock,1000); tickClock();
+
+let chartInstance = null;
+
+function statusOf(row){
+  if(!row["Station 1 Date"]) return {label:"NOT YET ARRIVED", cls:"st-masuk"};
+  if(row["Station 1 Date"] && !row["QC Date Tap In"]) return {label:"NOT SAMPLED YET", cls:"st-belumsampling"};
+  if(row["QC Date Tap In"] && !row["QC Date Tap Out"]) return {label:"ALREADY SAMPLED / ANALYZING", cls:"st-sudahsampling"};
+  if(row["WH Start Date"] && !row["WH Finish Date"]) return {label:"UNLOADING", cls:"st-belumanalisa"};
+  if(row["WH Finish Date"] || row["Complete WH"]) return {label:"ALREADY UNLOADED", cls:"st-selesai"};
+  return {label:"-", cls:""};
+}
+
+function referenceDate(row){
+  return row["Station 1 Date"] || row["QC Date Tap In"] || row["QC Date Tap Out"] ||
+         row["WH Start Date"] || row["WH Finish Date"] || null;
+}
+
+function minutesBetween(d1,d2){
+  if(!d1 || !d2) return null;
+  const t1 = new Date(d1), t2 = new Date(d2);
+  if(isNaN(t1)||isNaN(t2)) return null;
+  return Math.round((t2-t1)/60000);
+}
+
+function sortRowsByStatusAndDate(rows, direction){
+  const withMeta = rows.map(r=>{
+    const st = statusOf(r);
+    const ref = referenceDate(r);
+    return { row:r, statusLabel:st.label, statusCls:st.cls, refTime: ref ? new Date(ref).getTime() : -Infinity };
+  });
+  withMeta.sort((a,b)=>{
+    const oa = STATUS_ORDER.indexOf(a.statusLabel);
+    const ob = STATUS_ORDER.indexOf(b.statusLabel);
+    if(oa !== ob) return oa - ob;
+    return direction === 'asc' ? a.refTime - b.refTime : b.refTime - a.refTime;
+  });
+  return withMeta;
+}
+
+function buildCardsFromRaw(rows){
+  const yetToSample = rows.filter(r=>r["Station 1 Date"] && !r["QC Date Tap In"]);
+  const sampled = rows.filter(r=>r["QC Date Tap In"]);
+  const yetToAnalyze = rows.filter(r=>r["QC Date Tap In"] && !r["QC Date Tap Out"]);
+  const waitingUnload = rows.filter(r=>r["QC Date Tap Out"] && !r["WH Start Date"]);
+  const alreadyUnloaded = rows.filter(r=>r["WH Finish Date"] || r["Complete WH"]);
+  const incoming = rows.filter(r=>r["Station 1 Date"]);
+
+  function groupByMaterial(list){
+    const map = {};
+    list.forEach(r=>{
+      const mat = r["Mapping DO"] || r["Bbm SJ"] || "Others";
+      map[mat] = (map[mat]||0)+1;
+    });
+    return Object.entries(map).map(([nama,jumlah])=>({nama,jumlah}));
+  }
+
+  // KHUSUS KARTU 2: Tampilkan Plat Mobil
+  function getMaterialAndPlates(list){
+    return list.map(r => ({
+      nama: r["Mapping DO"] || r["Bbm SJ"] || "Others",
+      jumlah: r["Truck No."] || "-"
+    }));
+  }
+
+  function pct(n){ return rows.length? Math.round(n/rows.length*100) : 0; }
+
+  const avgSampling = (()=>{
+    const durs = sampled.map(r=>minutesBetween(r["Station 1 Date"], r["QC Date Tap In"])).filter(v=>v!==null);
+    return durs.length? Math.round(durs.reduce((a,b)=>a+b,0)/durs.length) : null;
+  })();
+  const avgAnalyze = (()=>{
+    const durs = rows.map(r=>minutesBetween(r["QC Date Tap In"], r["QC Date Tap Out"])).filter(v=>v!==null);
+    return durs.length? Math.round(durs.reduce((a,b)=>a+b,0)/durs.length) : null;
+  })();
+  const avgUnload = (()=>{
+    const durs = rows.map(r=>minutesBetween(r["WH Start Date"], r["WH Finish Date"])).filter(v=>v!==null);
+    return durs.length? Math.round(durs.reduce((a,b)=>a+b,0)/durs.length) : null;
+  })();
+
+  const incomingMaterials = groupByMaterial(incoming);
+  const half = Math.ceil(incomingMaterials.length / 2);
+
+  return [
+    {title:"INCOMING RAW MATERIAL", icon:"🚚", colorClass:"b1", total:incoming.length, percent:(incoming.length > 0 ? 100 : 0),
+      rows:incomingMaterials, displayMode:"split",
+      splitLeft: incomingMaterials.slice(0, half), splitRight: incomingMaterials.slice(half)},
+
+    {title:"NOT SAMPLED YET", icon:"🧪", colorClass:"b2", total:yetToSample.length, percent:pct(yetToSample.length),
+      rows:getMaterialAndPlates(yetToSample), displayMode:"table", col2Name:"PLAT MOBIL"},
+
+    {title:"ALREADY SAMPLED", icon:"✅", colorClass:"b3", total:sampled.length, percent:pct(sampled.length),
+      rows:groupByMaterial(sampled), displayMode:"table",
+      avgLabel:"AVG SAMPLING", avgValue:avgSampling},
+
+    {title:"NOT ANALYZED YET", icon:"📋", colorClass:"b4", total:yetToAnalyze.length, percent:pct(yetToAnalyze.length),
+      rows:groupByMaterial(yetToAnalyze), displayMode:"table",
+      avgLabel:"AVG ANALYSIS", avgValue:avgAnalyze},
+
+    {title:"AWAITING UNLOADING", icon:"🚛", colorClass:"b5", total:waitingUnload.length, percent:pct(waitingUnload.length),
+      rows:groupByMaterial(waitingUnload), displayMode:"table",
+      avgLabel:"AVG UNLOADING", avgValue:avgUnload},
+
+    {title:"UNLOADING COMPLETED", icon:"🚚", colorClass:"b6", total:alreadyUnloaded.length, percent:pct(alreadyUnloaded.length),
+      rows:groupByMaterial(alreadyUnloaded), displayMode:"table"}
+  ];
+}
+
+function renderRejectedCard(rows) {
+  const rejectedRows = rows.filter(r => r["Cancel"] === 1);
+  const map = {};
+  rejectedRows.forEach(r => {
+    const mat = r["Mapping DO"] || "Others";
+    map[mat] = (map[mat] || 0) + 1;
+  });
+  const rejectedList = Object.entries(map).map(([nama, jumlah]) => ({nama, jumlah}));
+
+  const container = document.getElementById('rejectedCardContent');
+  
+  // Amankan posisi scroll sebelumnya agar tidak hilang ketika di refresh
+  const oldScroll = container.scrollTop;
+
+  if(rejectedList.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#7d8aa6;margin-top:20px;font-size:11px;">No Rejected Materials</div>';
+  } else {
+    let html = '<table style="width:100%;font-size:11px;border-collapse:collapse;"><tbody>';
+    rejectedList.forEach(item => {
+      html += `<tr>
+                 <td style="padding:3px 0;border-bottom:1px dashed rgba(255,255,255,0.06);color:var(--text);">${item.nama}</td>
+                 <td style="text-align:right;font-weight:700;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,0.06);color:var(--red);">${item.jumlah}</td>
+               </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+  
+  // Kembalikan posisi scroll
+  container.scrollTop = oldScroll;
+}
+
+function buildPerHourChart(rows){
+  const buckets = {};
+  for(let h=CONFIG.CHART_DAY_START_HOUR; h<=CONFIG.CHART_DAY_END_HOUR; h++){
+    buckets[h] = 0;
+  }
+  rows.forEach(r=>{
+    if(!r["QC Date Tap In"]) return;
+    const d = new Date(r["QC Date Tap In"]);
+    if(isNaN(d)) return;
+    const hour = d.getHours();
+    if(buckets.hasOwnProperty(hour)) buckets[hour] += 1;
+  });
+  return buckets;
+}
+
+function renderChart(buckets){
+  const hours = [];
+  for(let h=CONFIG.CHART_DAY_START_HOUR; h<=CONFIG.CHART_DAY_END_HOUR; h++) hours.push(h);
+  const labels = hours.map(h=>String(h).padStart(2,'0')+':00');
+  const values = hours.map(h=>buckets[h]||0);
+
+  const wrap = document.getElementById('chartScrollWrap');
+  const inner = document.getElementById('chartInner');
+  
+  const calculatedWidth = hours.length * CONFIG.CHART_BAR_WIDTH_PX;
+  inner.style.width = Math.max(wrap.clientWidth, calculatedWidth) + 'px';
+  inner.style.height = '100%';
+
+  const ctx = document.getElementById('perHourChart').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  
+  chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Trucks', data:values,
+        backgroundColor:'#2f6fed', borderRadius:4,
+        barThickness: 14,
+        maxBarThickness: 18
+      }]
+    },
+    plugins: [{
+      id: 'endLabels',
+      afterDatasetsDraw(chart) {
+        const {ctx} = chart;
+        chart.data.datasets.forEach((dataset, i) => {
+          const meta = chart.getDatasetMeta(i);
+          meta.data.forEach((bar, index) => {
+            const data = dataset.data[index];
+            if(data > 0) {
+              ctx.fillStyle = '#e8edf7';
+              ctx.font = 'bold 9px sans-serif';
+              ctx.textAlign = 'center'; 
+              ctx.textBaseline = 'bottom';
+              ctx.fillText(data, bar.x, bar.y - 4); 
+            }
+          });
+        });
+      }
+    }],
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      layout: { padding: { top: 20 } }, 
+      scales:{
+        x:{ ticks:{color:'#7d8aa6', font:{size:9} }, grid:{display:false}, border:{display:false} },
+        y:{ display:false, beginAtZero:true } 
+      }
+    }
+  });
+
+  const now = new Date();
+  const currentHour = Math.max(CONFIG.CHART_DAY_START_HOUR, Math.min(now.getHours(), CONFIG.CHART_DAY_END_HOUR));
+  const startHour = Math.max(CONFIG.CHART_DAY_START_HOUR, currentHour - CONFIG.CHART_WINDOW_HOURS + 1);
+  const indexFromStart = startHour - CONFIG.CHART_DAY_START_HOUR;
+  
+  requestAnimationFrame(()=>{ wrap.scrollLeft = indexFromStart * CONFIG.CHART_BAR_WIDTH_PX; });
+
+  setupChartAutoScroll();
+}
+
+let chartScrollTimer = null;
+let chartScrollPaused = false;
+let chartScrollResumeTimer = null;
+
+function setupChartAutoScroll(){
+  const wrap = document.getElementById('chartScrollWrap');
+  if(!wrap) return;
+  if(chartScrollTimer) clearInterval(chartScrollTimer);
+  chartScrollPaused = false;
+
+  function pauseManual(){
+    if(!scrollStates['chart']) return; // Ter-pause manual
+    chartScrollPaused = true;
+    if(chartScrollResumeTimer) clearTimeout(chartScrollResumeTimer);
+    chartScrollResumeTimer = setTimeout(()=>{ chartScrollPaused = false; }, CONFIG.CHART_RESUME_DELAY_MS);
+  }
+  wrap.onwheel = pauseManual;
+  wrap.ontouchstart = pauseManual;
+  wrap.onmousedown = pauseManual;
+
+  const stepPerTick = 1;
+  chartScrollTimer = setInterval(()=>{
+    if(!scrollStates['chart'] || chartScrollPaused) return;
+    
+    const maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    if(maxScroll <= 0) return;
+    if(wrap.scrollLeft >= maxScroll - 1){
+      wrap.scrollLeft = 0;
+    } else {
+      wrap.scrollLeft += stepPerTick;
+    }
+  }, 50);
+}
+
+function renderAlert(a){
+  document.getElementById('al_truck').textContent = a.truck ?? '-';
+  document.getElementById('al_rfid').textContent = a.rfid ?? '-';
+  document.getElementById('al_durasi').textContent = a.durasi_menit !== null ? formatDuration(a.durasi_menit) : '-';
+  document.getElementById('al_s1').innerHTML = renderDateCell(a.station1);
+  document.getElementById('al_status').textContent = a.status ?? '-';
+}
+
+function buildAlert(rows){
+  const pending = rows.filter(r=>r["Station 1 Date"] && !r["WH Start Date"]);
+  let worst = null, worstMin = -1;
+  pending.forEach(r=>{
+    const m = minutesBetween(r["Station 1 Date"], new Date().toISOString());
+    if(m!==null && m>worstMin){ worstMin=m; worst=r; }
+  });
+  if(!worst) return {truck:"-", rfid:"-", durasi_menit:null, station1:null, status:"-"};
+  return {
+    truck: worst["Truck No."] || "-",
+    rfid: worst["RFID No"] || "-",
+    durasi_menit: worstMin,
+    station1: worst["Station 1 Date"] || null,
+    status: statusOf(worst).label
+  };
+}
+
+let splitScrollTimers = [];
+
+function setupSplitAutoScroll(){
+  splitScrollTimers.forEach(t => clearInterval(t));
+  splitScrollTimers = [];
+
+  const boxes = document.querySelectorAll('.split-scroll-box');
+  if(!boxes.length) return;
+
+  boxes.forEach(box => {
+    let isPaused = false;
+    let resumeTimer = null;
+
+    const pauseInteraction = () => {
+      isPaused = true;
+      if(resumeTimer) clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => {
+        isPaused = false;
+      }, 4000); // Resume 4 detik setelah di-scroll manual
+    };
+
+    box.addEventListener('wheel', pauseInteraction, { passive: true });
+    box.addEventListener('touchstart', pauseInteraction, { passive: true });
+    box.addEventListener('mousedown', pauseInteraction);
+
+    const timer = setInterval(() => {
+      // CEK STATUS GLOBAL TOMBOL PAUSE
+      const globalKey = box.dataset.scrollKey;
+      if(globalKey && scrollStates[globalKey] === false) return; // Jika tombol diklik pause, berhenti
+
+      if(isPaused) return; // Ter-pause sementara karena interaksi mouse
+
+      const maxScroll = box.scrollHeight - box.clientHeight;
+      if(maxScroll <= 2) return;
+      if(box.scrollTop >= maxScroll - 1) {
+        box.scrollTop = 0;
+      } else {
+        box.scrollTop += 0.8;
+      }
+    }, 45);
+
+    splitScrollTimers.push(timer);
+  });
+}
+
+function renderCards(cards){
+  const grid = document.getElementById('cardsGrid');
+  
+  // 1. Amankan posisi scroll sebelumnya sebelum di-replace 
+  // (agar saat user scroll manual tidak kembali ke atas tiap 5 detik)
+  const oldScrolls = {};
+  document.querySelectorAll('.split-scroll-box').forEach(box => {
+    if(box.id) oldScrolls[box.id] = box.scrollTop;
+  });
+
+  grid.innerHTML = '';
+  cards.forEach((c, idx) => {
+    
+    const percentVal = c.percent !== null && c.percent !== undefined ? c.percent : 0;
+    
+    const mainValueHtml = `
+      <div class="metric-value">${percentVal}%</div>
+      <div class="metric-unit">TRUCKS</div>
+    `;
+
+    let bodyHtml;
+    if(c.displayMode === 'split'){
+      function renderSplitRows(list){
+        return list.length
+          ? list.map(r=>`<tr><td>${r.nama}</td><td style="text-align:right;font-weight:700;">${r.jumlah}</td></tr>`).join('')
+          : `<tr><td style="color:#556;text-align:center;">-</td></tr>`;
+      }
+      bodyHtml = `
+        <div class="split-tables">
+          <div class="split-col">
+            <div class="split-col-title">WITH PRESAMPLING</div>
+            <div class="split-scroll-box" id="scroll-c${idx}-left" data-scroll-key="c${idx}">
+              <table><tbody>${renderSplitRows(c.splitLeft)}</tbody></table>
+            </div>
+          </div>
+          <div class="split-col">
+            <div class="split-col-title">WITHOUT PRESAMPLING</div>
+            <div class="split-scroll-box" id="scroll-c${idx}-right" data-scroll-key="c${idx}">
+              <table><tbody>${renderSplitRows(c.splitRight)}</tbody></table>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      const col2Name = c.col2Name || "QTY";
+      const rowsHtml = c.rows.length
+        ? c.rows.map(r => `<tr><td>${r.nama}</td><td style="text-align:right;">${r.jumlah}</td></tr>`).join('')
+        : `<tr><td colspan="2" style="color:#556;text-align:center;">-</td></tr>`;
+      
+      bodyHtml = `
+        <div class="split-scroll-box" id="scroll-c${idx}" data-scroll-key="c${idx}" style="flex:1;">
+          <table>
+            <thead><tr><td>MAPPING DO</td><td style="text-align:right;">${col2Name}</td></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    let lines = '';
+    lines += `<div class="stat-line"><span class="stat-label">TOTAL</span><span class="stat-value">${c.total}</span></div>`;
+    
+    if(c.avgLabel && c.avgValue !== null && c.avgValue !== undefined){
+      lines += `<div class="stat-line highlight"><span class="stat-label">⏱ ${c.avgLabel}</span><span class="stat-value">${formatDuration(c.avgValue)}</span></div>`;
+    } else {
+      lines += `<div class="stat-line"></div>`; 
+    }
+    let statBlockHtml = `<div class="stat-block">${lines}</div>`;
+
+    // Tombol Toggle bergantung pada global `scrollStates`
+    const isRunning = scrollStates['c'+idx] !== false;
+    const btnClass = isRunning ? 'active' : '';
+    const btnText = isRunning ? '⏸ Pause' : '▶ Resume';
+
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="card">
+        <div class="card-head" style="justify-content: space-between;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="badge-num ${c.colorClass}">${idx+1}</div>
+            <div>${c.icon || ''} ${c.title}</div>
+          </div>
+          <button id="btn-scroll-c${idx}" class="btn-toggle ${btnClass}" onclick="toggleScroll('c${idx}')">${btnText}</button>
+        </div>
+        <div class="metric-row">
+          ${mainValueHtml}
+        </div>
+        ${bodyHtml}
+        ${statBlockHtml}
+      </div>
+    `);
+  });
+
+  // 2. Kembalikan posisi scroll yang tadi diamankan
+  document.querySelectorAll('.split-scroll-box').forEach(box => {
+    if(box.id && oldScrolls[box.id] !== undefined) {
+      box.scrollTop = oldScrolls[box.id];
+    }
+  });
+
+  setupSplitAutoScroll();
+}
+
+function renderRawTable(rows){
+  const direction = document.getElementById('sortDirection').value;
+  const sorted = sortRowsByStatusAndDate(rows, direction);
+
+  const head = document.getElementById('rawTableHead');
+  const body = document.getElementById('rawTableBody');
+  const wrap = document.getElementById('rawTableScrollWrap');
+  
+  // Amankan posisi scroll
+  const currentScroll = wrap ? wrap.scrollTop : 0;
+
+  head.innerHTML = '<td>Status</td>' + RAW_COLUMNS.map(c=>`<td>${c}</td>`).join('');
+
+  let html = '';
+  let currentStatus = null;
+  sorted.forEach(item=>{
+    if(item.statusLabel !== currentStatus){
+      currentStatus = item.statusLabel;
+      const countInGroup = sorted.filter(x=>x.statusLabel===currentStatus).length;
+      html += `<tr class="group-header"><td colspan="${RAW_COLUMNS.length+1}">${currentStatus} — ${countInGroup}</td></tr>`;
+    }
+    const r = item.row;
+    const cells = RAW_COLUMNS.map(c=>{
+      const val = r[c];
+      if(DATE_COLUMNS.has(c)) return `<td>${renderDateCell(val)}</td>`;
+      return `<td>${val ?? ''}</td>`;
+    }).join('');
+    html += `<tr><td><span class="status-pill ${item.statusCls}">${item.statusLabel}</span></td>${cells}</tr>`;
+  });
+
+  body.innerHTML = html;
+  document.getElementById('rawCount').textContent = rows.length + ' rows';
+  
+  // Kembalikan posisi scroll
+  if(wrap) wrap.scrollTop = currentScroll;
+
+  setupRawTableAutoScroll();
+}
+
+let rawScrollTimer = null;
+let rawScrollPaused = false;
+let rawScrollResumeTimer = null;
+
+function setupRawTableAutoScroll(){
+  const wrap = document.getElementById('rawTableScrollWrap');
+  if(!wrap) return;
+
+  if(rawScrollTimer) clearInterval(rawScrollTimer);
+  rawScrollPaused = false;
+
+  function pauseManual(){
+    rawScrollPaused = true;
+    if(rawScrollResumeTimer) clearTimeout(rawScrollResumeTimer);
+    rawScrollResumeTimer = setTimeout(()=>{ rawScrollPaused = false; }, CONFIG.RAWTABLE_RESUME_DELAY_MS);
+  }
+  wrap.onwheel = pauseManual;
+  wrap.ontouchstart = pauseManual;
+  wrap.onmousedown = pauseManual;
+
+  const stepPerTick = CONFIG.RAWTABLE_SCROLL_PX_PER_SEC / 10;
+  rawScrollTimer = setInterval(()=>{
+    // CEK GLOBAL PAUSE STATUS
+    if(scrollStates['raw'] === false) return;
+    
+    if(rawScrollPaused) return;
+    const maxScroll = wrap.scrollHeight - wrap.clientHeight;
+    if(maxScroll <= 0) return;
+    if(wrap.scrollTop >= maxScroll - 1){
+      wrap.scrollTop = 0;
+    } else {
+      wrap.scrollTop += stepPerTick;
+    }
+  }, 100);
+}
+
+// ==========================================
+// MOCK DATA GENERATOR BERBASIS TANGGAL & ACAK TOTAL
+// ==========================================
+function generateMockRows(dateStr){
+  const selectedDateObj = new Date(dateStr);
+  selectedDateObj.setHours(0,0,0,0);
+  const todayObj = new Date();
+  todayObj.setHours(0,0,0,0);
+  
+  if (selectedDateObj > todayObj) {
+    return []; 
+  }
+
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+      hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  function seededRandom() {
+      var t = hash += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+
+  const isToday = selectedDateObj.getTime() === todayObj.getTime();
+  const now = new Date();
+
+  const materials = [
+    "Local Corn","Stone Granules","Wheat Bran Pellet","Palm Olein",
+    "Soybean Meal","Fish Meal","Rice Bran","Molasses","Limestone",
+    "Cassava Chips","DDGS","Corn Gluten Meal","Meat Bone Meal","Poultry Meal"
+  ];
+  const platHuruf = ["AB","BE","B","A","D","F","L","N","AG","W","BG"];
+  
+  const n = 70 + Math.floor(seededRandom() * 70); 
+  
+  let times = [];
+  for(let i=0; i<n; i++){
+    const hour = 7 + Math.floor(seededRandom() * 11);
+    const min = Math.floor(seededRandom() * 60);
+    times.push(new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}:00`));
+  }
+  times.sort((a,b) => a.getTime() - b.getTime());
+
+  const rows = [];
+  
+  for(let i=0; i<n; i++){
+    const s1 = times[i]; 
+    
+    if (isToday && s1 > now) {
+      continue;
+    }
+
+    const hasQcIn = i < Math.floor(n * 0.90);
+    const isRejected = (hasQcIn && seededRandom() < 0.12) ? 1 : 0;
+    const hasQcOut = i < Math.floor(n * 0.75);
+    const hasWhStart = (i < Math.floor(n * 0.55) && !isRejected);
+    const hasWhFinish = (i < Math.floor(n * 0.35) && !isRejected);
+    
+    let qcIn = hasQcIn ? new Date(s1.getTime() + (10 + seededRandom()*20)*60000) : null;
+    let qcOut = hasQcOut ? new Date((qcIn||s1).getTime() + (20 + seededRandom()*30)*60000) : null;
+    let whStart = hasWhStart ? new Date((qcOut||s1).getTime() + (15 + seededRandom()*40)*60000) : null;
+    let whFinish = hasWhFinish ? new Date((whStart||s1).getTime() + (30 + seededRandom()*40)*60000) : null;
+    
+    if (isToday) {
+      if (qcIn && qcIn > now) qcIn = null;
+      if (!qcIn || (qcOut && qcOut > now)) qcOut = null;
+      if (!qcOut || (whStart && whStart > now)) whStart = null;
+      if (!whStart || (whFinish && whFinish > now)) whFinish = null;
+    }
+    
+    const finalCompleteWh = whFinish ? 1 : 0;
+    const finalPosting = whFinish ? "Y" : "N";
+    const finalMatDoc = whFinish ? "MD"+(900000+Math.floor(seededRandom()*99999)) : null;
+    const finalClosed = whFinish ? 1 : 0;
+    const finalCancel = (isRejected && qcIn !== null) ? 1 : 0;
+
+    const randomMaterial = materials[Math.floor(seededRandom() * materials.length)];
+    const randomPlat = platHuruf[Math.floor(seededRandom() * platHuruf.length)];
+    const randomStation = "ST1-0" + (1 + Math.floor(seededRandom() * 3));
+    const randomWh = "WH-0" + (1 + Math.floor(seededRandom() * 3));
+
+    rows.push({
+      "Station 1 Date": s1.toISOString(),
+      "RFID No": "RF"+(10000 + Math.floor(seededRandom()*89999)),
+      "Truck No.": "BE "+(1000+Math.floor(seededRandom()*8999))+" " + randomPlat,
+      "Transaction No": "TRX"+(500000+Math.floor(seededRandom()*499999)),
+      "Transaction Type": "IN",
+      "Station 1 No": randomStation,
+      "Mapping DO": randomMaterial,
+      "Station 5 Tap In": null,
+      "Sanitation Date": null,
+      "QC No": qcIn ? "QC"+(7000+Math.floor(seededRandom()*2999)) : null,
+      "QC Date Tap In": qcIn ? qcIn.toISOString() : null,
+      "QC Date Tap Out": qcOut ? qcOut.toISOString() : null,
+      "Weighing No": null,
+      "Weight1 Date": null,
+      "Weight2 Date": null,
+      "Ud U Time": null,
+      "Weight Status ID": null,
+      "Warehouse No": randomWh,
+      "WH Start Date": whStart ? whStart.toISOString() : null,
+      "WH Finish Date": whFinish ? whFinish.toISOString() : null,
+      "Complete WH": finalCompleteWh,
+      "Posting": finalPosting,
+      "Posting Date": null,
+      "Bbm SJ": "SJ"+(300000+Math.floor(seededRandom()*99999)),
+      "Cancel": finalCancel,
+      "Mat Doc Cancel": null,
+      "Mat Doc": finalMatDoc,
+      "Ud Code": null,
+      "Closed": finalClosed,
+      "Plant Id": "PLT-LPG01",
+      "Site Id": "TB-LAMPUNG",
+      "SODO Update Required": 0,
+      "SODO Update Message": null,
+      "Sales Order No": "SO"+(800000+Math.floor(seededRandom()*99999))
+    });
+  }
+  return rows;
+}
+
+let currentRows = [];
+
+async function fetchAndRender(){
+  const statusEl = document.getElementById('connStatus');
+  const selectedDate = document.getElementById('filterDate').value;
+  
+  try{
+    let rows;
+    if(CONFIG.DATA_MODE === "api"){
+      const res = await fetch(CONFIG.API_URL + selectedDate, {cache:"no-store"});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      rows = await res.json();
+      statusEl.textContent = 'LIVE REAL-TIME (API)'; statusEl.className='ok';
+    } else {
+      rows = generateMockRows(selectedDate);
+      statusEl.textContent = 'LIVE REAL-TIME (Mock)';
+      statusEl.className = 'ok';
+    }
+    currentRows = rows;
+    
+    renderCards(buildCardsFromRaw(rows));
+    renderRejectedCard(rows);
+    renderChart(buildPerHourChart(rows));
+    renderAlert(buildAlert(rows));
+    renderRawTable(rows);
+    
+  }catch(err){
+    console.error('Fetch error:', err);
+    statusEl.textContent = 'Connection failed';
+    statusEl.className = 'err';
+  }
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
+}
+
+document.getElementById('sortDirection').addEventListener('change', ()=> renderRawTable(currentRows));
+
+fetchAndRender();
+setInterval(fetchAndRender, CONFIG.REFRESH_MS);
+</script>
+</body>
+</html>
